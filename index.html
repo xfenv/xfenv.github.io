@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ISC Web Oscilloscope [test]</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="stylesheet" href="style.css">
+  <script src="scope.js" defer></script>
+</head>
+<body>
+  <header>
+    <div class="site-logo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 90" width="300" height="90" style="max-width:100%;height:auto;position:relative;z-index:1;">
+        <!-- "ISC" neon glow filter-->
+        <defs>
+          <filter id="f0" x="-10%" y="-40%" width="120%" height="180%">
+            <feGaussianBlur stdDeviation="4" result="b0"/>
+            <feMerge><feMergeNode in="b0"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <!-- "ISC" in original site color -->
+        <text x="20" y="60%" font-family="'Courier New', Courier, monospace"
+          font-size="50" font-weight="bold" fill="#226a87" filter="url(#f0)"
+          letter-spacing="-1">ISC</text>
+        <!-- "Scope" in infinite temperature color -->
+        <text x="107" y="60%" font-family="'Courier New', Courier, monospace"
+          font-size="50" font-weight="bold" fill="#94b1ff"
+          letter-spacing="-1">_Scope</text>
+        <!-- site tagline -->
+        <text x="25" y="90%" font-family="'Courier New', Courier, monospace"
+          font-size="10" fill="#226a87"
+          letter-spacing="2.5">BROWSER OSCILLOSCOPE UI</text>
+      </svg>
+    </div>
+    <div class="site-options">
+      <button id="themeBtn" class="theme-toggle" onclick="toggleTheme()">
+        <span id="themeIcon" class="theme-toggle-icon">🌙</span>
+        <span id="themeLabel" class="theme-toggle-label">Dark</span>
+      </button>
+    </div>
+  </header>
+  <main>
+    <div class="scope-main">
+      <!-- scope -->
+      <div class="panel screen-area">
+        <canvas id="screen" width="1024" height="720"></canvas>
+      </div>
+      <!-- data -->
+      <div class="panel scope-data">
+        <label>READINGS</label><label></label>
+        <div class="results-group">
+          <label>CH1 RMS</label>
+          <label id="ch1-rms">-</label>
+          <label>CH2 RMS</label>
+          <label id="ch2-rms">-</label>
+          <label>CH1 Frequency</label>
+          <label id="ch1-freq">-</label>
+          <label>CH2 Frequency</label>
+          <label id="ch2-freq">-</label>
+          <label>Phase</label>
+          <label id="m-phase">-</label>
+        </div>
+      </div>
+    </div>
+    <div class="scope-side">
+      <!-- connect -->
+      <div class="panel scope-connect">
+        <button id="connectBtn" onclick="toggleConnection()">CONNECT</button>
+        <button id="stopBtn" onclick="toggleDisplayUpdate()">STOP</button>
+      </div>
+      <!-- settings menu -->
+      <div class="panel scope-settings">
+        <div class="panel-title">
+          SETTINGS
+        </div>
+        <div class="input-group">
+          <label>GENERATOR</label>
+          <div>
+            <input type="number" id="gen-freq" value="1000" min="10" step="1" max="50000" onchange="sendHex()" onkeypress="if(event.key==='Enter') {event.target.blur();sendHex();}">
+            <label>Hz</label>
+          </div>
+          <select id="gen-wave" onchange="sendHex()">
+            <option value=0 selected>Sine</option>
+            <option value=1>Triangle</option>
+            <option value=2>Square</option>
+          </select>
+          <select id="gen-attn" onchange="sendHex()">
+            <option value=0 selected>0 dB</option>
+            <option value=1>-6 dB</option>
+            <option value=2>-20 dB</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>TRIGGER</label>
+          <input type="range" id="gen-trig" value="2047" min="0" step="1" max="4095" oninput="updateTriggerLevel()" onchange="sendHex()">
+        </div>
+        <div class="input-group">
+          <label>TIME SCALE</label>
+          <select id="time-scale">
+            <option value=10>10 ms/div</option>
+            <option value=5>5 ms/div</option>
+            <option value=2>2 ms/div</option>
+            <option value=1 selected>1 ms/div</option>
+            <option value=0.5>500 µs/div</option>
+            <option value=0.2>200 µs/div</option>
+            <option value=0.1>100 µs/div</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>CHANNEL 1</label>
+          <select id="ch1-scale">
+            <option value=750>750 mV/div</option>
+            <option value=500 selected>500 mV/div</option>
+            <option value=250>250 mV/div</option>
+            <option value=100>100 mV/div</option>
+            <option value=50>50 mV/div</option>
+          </select>
+          <select id="ch1-type" onchange="sendHex()">
+            <option value=0 selected>direct</option>
+            <option value=1>amplified</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>CHANNEL 2</label>
+          <select id="ch2-scale">
+            <option value=750>750 mV/div</option>
+            <option value=500 selected>500 mV/div</option>
+            <option value=250>250 mV/div</option>
+            <option value=100>100 mV/div</option>
+            <option value=50>50 mV/div</option>
+          </select>
+          <select id="ch2-type" onchange="sendHex()">
+            <option value=0 selected>direct</option>
+            <option value=1>amplified</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </main>
+  <!-- status bar in the footer -->
+  <footer>
+    <div class="status-indicator">
+      <div id="statusDot" class="status-dot"></div>
+      <span id="statusText">Disconnected</span>
+      <span id="connTimeout" style="display:none;color:#ff4757;margin-left:10px;font-size:11px;">(Stuck? <a href="#" onclick="forceDisconnect();return false;" style="color:#ff4757;text-decoration:underline;">Force disconnect</a>)</span>
+    </div>
+  </footer>
+</body>
+</html>
